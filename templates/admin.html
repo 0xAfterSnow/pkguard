@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - PkgGuard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,700&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Nav -->
+  <nav>
+    <a class="nav-logo" href="/">
+      <div class="logo-shield">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L3 6V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V6L12 2Z" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 12L11 14L15 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      PkgGuard Admin
+    </a>
+    <div class="nav-links">
+      <a href="/">Back to Scanner</a>
+    </div>
+  </nav>
+
+  <div class="section admin-section">
+    <div class="section-eyebrow">Dashboard</div>
+    <div class="section-title">Manage Tools</div>
+    
+    <div class="admin-grid">
+      <!-- Add Tool Form -->
+      <div class="admin-card">
+        <h3>Add New Tool</h3>
+        <form id="add-tool-form">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="t-name" required placeholder="e.g. Snyk CLI">
+          </div>
+          <div class="form-group">
+            <label>Type Category</label>
+            <input type="text" id="t-type" required placeholder="e.g. CLI Tool">
+          </div>
+          <div class="form-group">
+            <label>Color Class</label>
+            <select id="t-cls">
+              <option value="tt-vscode">Green (tt-vscode)</option>
+              <option value="tt-cli">Yellow (tt-cli)</option>
+              <option value="tt-ci">Purple (tt-ci)</option>
+              <option value="tt-service">Red (tt-service)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>URL</label>
+            <input type="url" id="t-url" required placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="t-desc" required rows="3" placeholder="Brief description..."></textarea>
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Add Tool</button>
+        </form>
+      </div>
+
+      <!-- Current Tools -->
+      <div class="admin-list-wrap">
+        <h3>Current Tools</h3>
+        <div id="admin-tools-list" class="admin-tools-list">
+          <div class="hint-text">Loading tools...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadTools() {
+      try {
+        const res = await fetch('/api/tools');
+        const tools = await res.json();
+        const list = document.getElementById('admin-tools-list');
+        list.innerHTML = tools.map(t => `
+          <div class="admin-tool-row">
+            <div class="atr-info">
+              <div class="atr-title">${t.name} <span class="tool-type ${t.cls}">${t.type}</span></div>
+              <div class="atr-desc">${t.desc}</div>
+            </div>
+            <button class="btn-danger" onclick="deleteTool(${t.id})">Delete</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteTool(id) {
+      if(!confirm("Delete this tool?")) return;
+      await fetch(`/api/tools/${id}`, { method: 'DELETE' });
+      loadTools();
+    }
+
+    document.getElementById('add-tool-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('t-name').value,
+        type: document.getElementById('t-type').value,
+        cls: document.getElementById('t-cls').value,
+        url: document.getElementById('t-url').value,
+        desc: document.getElementById('t-desc').value,
+      };
+      
+      const res = await fetch('/api/tools', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if(res.ok) {
+        e.target.reset();
+        loadTools();
+      } else {
+        alert("Failed to add tool");
+      }
+    });
+
+    loadTools();
+  </script>
+</body>
+</html>
