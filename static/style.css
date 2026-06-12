@@ -214,10 +214,10 @@
     /* floating feature cards in hero */
     .hero-cards {
         position: absolute;
-        top: 40px;
-        right: -20px;
-        width: 600px;
-        height: 400px;
+        top: 100px;
+        right: -40px;
+        width: 620px;
+        height: 520px;
         pointer-events: none;
     }
 
@@ -251,8 +251,8 @@
     }
 
     .fcard-2 {
-        top: 40px;
-        left: 310px;
+        top: 60px;
+        left: 340px;
         transform: rotate(4deg);
         background: var(--pastel-blue);
         animation-delay: 0.25s;
@@ -260,8 +260,8 @@
     }
 
     .fcard-3 {
-        top: 190px;
-        left: -10px;
+        top: 250px;
+        left: 10px;
         transform: rotate(2deg);
         background: var(--pastel-purple);
         animation-delay: 0.4s;
@@ -269,8 +269,8 @@
     }
 
     .fcard-4 {
-        top: 220px;
-        left: 270px;
+        top: 280px;
+        left: 320px;
         transform: rotate(-2deg);
         background: var(--pastel-green);
         animation-delay: 0.55s;
@@ -325,8 +325,8 @@
     .annotation {
         font-family: 'Caveat', cursive;
         position: absolute;
-        top: 390px;
-        left: 260px;
+        top: 480px;
+        left: 300px;
         font-size: 22px;
         color: #94a3b8;
         transform: rotate(4deg);
