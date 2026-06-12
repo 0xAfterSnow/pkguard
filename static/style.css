@@ -1440,8 +1440,12 @@
     }
 
     @media (max-width: 640px) {
+        .nav-wrapper {
+            padding: 16px;
+        }
+        
         nav {
-            padding: 0 20px;
+            padding: 0 16px;
         }
 
         .nav-links {
@@ -1449,20 +1453,53 @@
         }
 
         .hero {
-            padding: 24px 16px 0;
+            padding: 16px 16px 0;
         }
 
         .hero-inner {
-            padding: 36px 24px 36px;
+            padding: 36px 20px 36px;
+        }
+
+        .hero-stats {
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 32px;
+            padding-top: 24px;
+        }
+
+        .hero-cta {
+            flex-direction: column;
+            align-items: stretch;
         }
 
         .section {
-            padding: 40px 20px;
+            padding: 40px 16px;
+        }
+
+        .scanner-wrap {
+            border-radius: 16px;
+        }
+        
+        .scanner-top {
+            padding: 24px 20px 0;
+        }
+
+        .scanner-bottom {
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+        
+        .hint-text {
+            margin-left: 0;
+            width: 100%;
+            margin-top: 8px;
         }
 
         .risk-summary {
             flex-direction: column;
             text-align: center;
+            gap: 20px;
+            padding: 24px;
         }
 
         .rs-divider {
@@ -1612,6 +1649,11 @@
 
         .admin-grid {
             grid-template-columns: 1fr;
+        }
+        
+        .section-scanner {
+            max-width: 100%;
+            margin: 0 auto;
         }
     }
 
