@@ -1,44 +1,78 @@
 import sqlite3
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "data", "pkguard.db")
+# ── Connection mode ────────────────────────────────────────────────────────
+# Set DATABASE_URL in production (e.g. postgresql://user:pass@host/db).
+# Falls back to local SQLite for development.
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+USE_PG = bool(DATABASE_URL)
 
-SCHEMA = """
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "pkguard.db")
+
+# ── Schema ─────────────────────────────────────────────────────────────────
+# Two flavours: SQLite uses AUTOINCREMENT, PostgreSQL uses SERIAL.
+_SCHEMA_SQLITE = """
 CREATE TABLE IF NOT EXISTS malicious_packages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    version TEXT,          -- NULL means ALL versions
-    severity TEXT NOT NULL CHECK(severity IN ('critical','high','medium','low')),
-    reason TEXT NOT NULL,
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL,
+    version     TEXT,
+    severity    TEXT NOT NULL CHECK(severity IN ('critical','high','medium','low')),
+    reason      TEXT NOT NULL,
     description TEXT,
-    cve TEXT,
-    source TEXT,
+    cve         TEXT,
+    source      TEXT,
     reported_at TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 );
-
 CREATE INDEX IF NOT EXISTS idx_pkg_name ON malicious_packages(name);
-
 CREATE TABLE IF NOT EXISTS typosquat_targets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
     legitimate_name TEXT NOT NULL,
-    category TEXT
+    category        TEXT
 );
-
 CREATE INDEX IF NOT EXISTS idx_typo_name ON typosquat_targets(legitimate_name);
-
 CREATE TABLE IF NOT EXISTS tools (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id   INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL,
-    cls TEXT NOT NULL,
+    cls  TEXT NOT NULL,
     name TEXT NOT NULL,
     desc TEXT NOT NULL,
-    url TEXT NOT NULL
+    url  TEXT NOT NULL
 );
 """
 
+_SCHEMA_PG = [
+    """CREATE TABLE IF NOT EXISTS malicious_packages (
+        id          SERIAL PRIMARY KEY,
+        name        TEXT NOT NULL,
+        version     TEXT,
+        severity    TEXT NOT NULL CHECK(severity IN ('critical','high','medium','low')),
+        reason      TEXT NOT NULL,
+        description TEXT,
+        cve         TEXT,
+        source      TEXT,
+        reported_at TEXT,
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )""",
+    "CREATE INDEX IF NOT EXISTS idx_pkg_name ON malicious_packages(name)",
+    """CREATE TABLE IF NOT EXISTS typosquat_targets (
+        id              SERIAL PRIMARY KEY,
+        legitimate_name TEXT NOT NULL,
+        category        TEXT
+    )""",
+    "CREATE INDEX IF NOT EXISTS idx_typo_name ON typosquat_targets(legitimate_name)",
+    """CREATE TABLE IF NOT EXISTS tools (
+        id   SERIAL PRIMARY KEY,
+        type TEXT NOT NULL,
+        cls  TEXT NOT NULL,
+        name TEXT NOT NULL,
+        desc TEXT NOT NULL,
+        url  TEXT NOT NULL
+    )""",
+]
+
+# ── Seed data ──────────────────────────────────────────────────────────────
 SEED_MALICIOUS = [
-    # name, version, severity, reason, description, cve, source
     ("event-stream", "3.3.6", "critical", "backdoor", "Malicious code injected to steal cryptocurrency wallet credentials", "N/A", "npm incident 2018"),
     ("flatmap-stream", "0.1.1", "critical", "backdoor", "Dependency of compromised event-stream, contained obfuscated payload", "N/A", "npm incident 2018"),
     ("ua-parser-js", "0.7.29", "critical", "malware", "Hijacked package that installed cryptominers and password stealers", "CVE-2021-41265", "npm incident 2021"),
@@ -135,7 +169,7 @@ SEED_MALICIOUS = [
     ("terminalcolor256", "2.2.6", "critical", "typosquat", "Lazarus Group typosquat mimicking terminal utility to deliver malware", "N/A", "ReversingLabs"),
     ("@duckdb/duckdb-wasm", "1.29.2", "critical", "malware", "Hijacked package containing browser-based crypto-stealer", "N/A", "Veracode 2025"),
     ("executable-stories-react", "0.1.7", "high", "malware", "Miasma supply chain worm artifact targeting UI testing frameworks", "N/A", "OX Security"),
-    ("autotel-playwright", "0.4.32", "high", "malware", "Miasma supply chain worm artifact targeting frontend testing", "N/A", "OX Security")
+    ("autotel-playwright", "0.4.32", "high", "malware", "Miasma supply chain worm artifact targeting frontend testing", "N/A", "OX Security"),
 ]
 
 SEED_TYPOSQUAT_TARGETS_EXPANDED = [
@@ -148,15 +182,16 @@ SEED_TYPOSQUAT_TARGETS_EXPANDED = [
     ("tailwind-merge", "styling"), ("radix-ui", "components"), ("shadcn-ui", "components"),
     ("zustand", "state-management"), ("redux", "state-management"), ("mobx", "state-management"),
     ("react-router-dom", "routing"), ("@tanstack/react-router", "routing"), ("@tanstack/vue-router", "routing"),
-    ("axios", "http"), ("node-fetch", "http"), ("got", "http"), 
-    ("chalk", "cli"), ("debug", "utility"), ("lodash", "utility"), 
+    ("axios", "http"), ("node-fetch", "http"), ("got", "http"),
+    ("chalk", "cli"), ("debug", "utility"), ("lodash", "utility"),
     ("moment", "utility"), ("date-fns", "utility"), ("rxjs", "utility"),
-    ("jest", "testing"), ("vitest", "testing"), ("playwright", "testing"), 
-    ("cypress", "testing"), ("mocha", "testing"), ("chai", "testing"), 
-    ("electron", "desktop"), ("socket.io", "realtime"), ("discord.js", "api"), 
+    ("jest", "testing"), ("vitest", "testing"), ("playwright", "testing"),
+    ("cypress", "testing"), ("mocha", "testing"), ("chai", "testing"),
+    ("electron", "desktop"), ("socket.io", "realtime"), ("discord.js", "api"),
     ("d3", "visualization"), ("three", "3d"), ("jquery", "dom"),
-    ("cross-env", "build"), ("dotenv", "config"), ("cors", "middleware")
+    ("cross-env", "build"), ("dotenv", "config"), ("cors", "middleware"),
 ]
+
 SEED_TOOLS = [
     ("VS Code", "tt-vscode", "Snyk Security", "Real-time vulnerability detection in your editor. Flags CVEs in package.json as you type.", "https://marketplace.visualstudio.com/items?itemName=snyk-security.snyk-vulnerability-scanner"),
     ("VS Code", "tt-vscode", "npm Audit", "Runs npm audit inline, surfacing vulnerability counts in the VS Code status bar automatically.", "https://marketplace.visualstudio.com/items?itemName=nicusorb.npm-audit"),
@@ -170,36 +205,95 @@ SEED_TOOLS = [
 ]
 
 
-def init_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.executescript(SCHEMA)
-    conn.commit()
+# ── SQLite adapter ─────────────────────────────────────────────────────────
+class _SQLiteConn:
+    """Wraps sqlite3 to accept %s placeholders so all query code is DB-agnostic."""
+    def __init__(self, path):
+        self._c = sqlite3.connect(path)
+        self._c.row_factory = sqlite3.Row
 
-    # Seed if empty
-    count = conn.execute("SELECT COUNT(*) FROM malicious_packages").fetchone()[0]
-    if count == 0:
-        conn.executemany(
-            "INSERT INTO malicious_packages (name, version, severity, reason, description, cve, source) VALUES (?,?,?,?,?,?,?)",
-            SEED_MALICIOUS,
-        )
-        conn.executemany(
-            "INSERT INTO typosquat_targets (legitimate_name, category) VALUES (?,?)",
-            SEED_TYPOSQUAT_TARGETS_EXPANDED,
-        )
-        conn.executemany(
-            "INSERT INTO tools (type, cls, name, desc, url) VALUES (?,?,?,?,?)",
-            SEED_TOOLS,
-        )
-        conn.commit()
-        print(f"[DB] Seeded {len(SEED_MALICIOUS)} malicious packages, {len(SEED_TYPOSQUAT_TARGETS_EXPANDED)} typosquat targets, and {len(SEED_TOOLS)} tools.")
-    else:
-        print(f"[DB] Database already has {count} records.")
-    conn.close()
-    return DB_PATH
+    def execute(self, sql, params=()):
+        return self._c.execute(sql.replace("%s", "?"), params)
+
+    def executemany(self, sql, seq):
+        return self._c.executemany(sql.replace("%s", "?"), seq)
+
+    def executescript(self, sql):
+        return self._c.executescript(sql)
+
+    def commit(self):
+        self._c.commit()
+
+    def close(self):
+        self._c.close()
 
 
+# ── Public helpers ─────────────────────────────────────────────────────────
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if USE_PG:
+        import psycopg2
+        import psycopg2.extras
+        url = DATABASE_URL
+        # Some platforms emit postgres:// which psycopg2 rejects
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+        return psycopg2.connect(url, cursor_factory=psycopg2.extras.RealDictCursor)
+    else:
+        return _SQLiteConn(DB_PATH)
+
+
+def init_db():
+    if USE_PG:
+        import psycopg2
+        import psycopg2.extras
+        url = DATABASE_URL.replace("postgres://", "postgresql://", 1) if DATABASE_URL.startswith("postgres://") else DATABASE_URL
+        conn = psycopg2.connect(url, cursor_factory=psycopg2.extras.RealDictCursor)
+        cur = conn.cursor()
+        for stmt in _SCHEMA_PG:
+            cur.execute(stmt)
+        count = cur.execute("SELECT COUNT(*) AS cnt FROM malicious_packages") or cur.fetchone()
+        count = cur.fetchone()["cnt"]
+        if count == 0:
+            psycopg2.extras.execute_values(
+                cur,
+                "INSERT INTO malicious_packages (name,version,severity,reason,description,cve,source) VALUES %s",
+                SEED_MALICIOUS,
+            )
+            psycopg2.extras.execute_values(
+                cur,
+                "INSERT INTO typosquat_targets (legitimate_name,category) VALUES %s",
+                SEED_TYPOSQUAT_TARGETS_EXPANDED,
+            )
+            psycopg2.extras.execute_values(
+                cur,
+                "INSERT INTO tools (type,cls,name,desc,url) VALUES %s",
+                SEED_TOOLS,
+            )
+            print(f"[DB] Seeded PostgreSQL with {len(SEED_MALICIOUS)} malicious packages.")
+        else:
+            print(f"[DB] PostgreSQL already has {count} records.")
+        conn.commit()
+        conn.close()
+    else:
+        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+        conn = _SQLiteConn(DB_PATH)
+        conn.executescript(_SCHEMA_SQLITE)
+        count = conn.execute("SELECT COUNT(*) AS cnt FROM malicious_packages").fetchone()["cnt"]
+        if count == 0:
+            conn.executemany(
+                "INSERT INTO malicious_packages (name,version,severity,reason,description,cve,source) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                SEED_MALICIOUS,
+            )
+            conn.executemany(
+                "INSERT INTO typosquat_targets (legitimate_name,category) VALUES (%s,%s)",
+                SEED_TYPOSQUAT_TARGETS_EXPANDED,
+            )
+            conn.executemany(
+                "INSERT INTO tools (type,cls,name,desc,url) VALUES (%s,%s,%s,%s,%s)",
+                SEED_TOOLS,
+            )
+            print(f"[DB] Seeded SQLite with {len(SEED_MALICIOUS)} malicious packages.")
+        else:
+            print(f"[DB] SQLite already has {count} records.")
+        conn.commit()
+        conn.close()

@@ -81,7 +81,7 @@ def add_tool():
     
     conn = get_connection()
     conn.execute(
-        "INSERT INTO tools (type, cls, name, desc, url) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO tools (type, cls, name, desc, url) VALUES (%s, %s, %s, %s, %s)",
         (data["type"], data["cls"], data["name"], data["desc"], data["url"])
     )
     conn.commit()
@@ -92,7 +92,7 @@ def add_tool():
 @requires_auth
 def delete_tool(tool_id):
     conn = get_connection()
-    conn.execute("DELETE FROM tools WHERE id = ?", (tool_id,))
+    conn.execute("DELETE FROM tools WHERE id = %s", (tool_id,))
     conn.commit()
     conn.close()
     return jsonify({"success": True})

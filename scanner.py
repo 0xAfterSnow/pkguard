@@ -32,10 +32,10 @@ class PackageScanner:
 
     def get_stats(self) -> dict:
         conn = get_connection()
-        total      = conn.execute("SELECT COUNT(*) FROM malicious_packages").fetchone()[0]
-        critical   = conn.execute("SELECT COUNT(*) FROM malicious_packages WHERE severity='critical'").fetchone()[0]
-        high       = conn.execute("SELECT COUNT(*) FROM malicious_packages WHERE severity='high'").fetchone()[0]
-        targets    = conn.execute("SELECT COUNT(*) FROM typosquat_targets").fetchone()[0]
+        total    = conn.execute("SELECT COUNT(*) AS cnt FROM malicious_packages").fetchone()["cnt"]
+        critical = conn.execute("SELECT COUNT(*) AS cnt FROM malicious_packages WHERE severity='critical'").fetchone()["cnt"]
+        high     = conn.execute("SELECT COUNT(*) AS cnt FROM malicious_packages WHERE severity='high'").fetchone()["cnt"]
+        targets  = conn.execute("SELECT COUNT(*) AS cnt FROM typosquat_targets").fetchone()["cnt"]
         conn.close()
         return {
             "total_known_malicious": total,
@@ -105,7 +105,7 @@ class PackageScanner:
     def _check_local_db(self, name: str, version: str) -> list:
         conn = get_connection()
         rows = conn.execute(
-            "SELECT * FROM malicious_packages WHERE LOWER(name)=LOWER(?)",
+            "SELECT * FROM malicious_packages WHERE LOWER(name)=LOWER(%s)",
             (name,)
         ).fetchall()
         conn.close()
@@ -176,7 +176,7 @@ class PackageScanner:
     # ------------------------------------------------------------------ #
     def _check_typosquat(self, name: str) -> list:
         conn = get_connection()
-        targets = [r[0] for r in conn.execute("SELECT legitimate_name FROM typosquat_targets").fetchall()]
+        targets = [r["legitimate_name"] for r in conn.execute("SELECT legitimate_name FROM typosquat_targets").fetchall()]
         conn.close()
 
         for legit in targets:
@@ -298,7 +298,7 @@ class PackageScanner:
             # Fallback: fuzzy-match against typosquat_targets table
             if not legit:
                 conn = get_connection()
-                tgts = [r[0] for r in conn.execute("SELECT legitimate_name FROM typosquat_targets").fetchall()]
+                tgts = [r["legitimate_name"] for r in conn.execute("SELECT legitimate_name FROM typosquat_targets").fetchall()]
                 conn.close()
                 best, best_ratio = None, 0.0
                 for t in tgts:
@@ -320,7 +320,7 @@ class PackageScanner:
         # 2. Package not found → fuzzy-match against known legitimate names
         if "not_found" in flag_types:
             conn = get_connection()
-            targets = [r[0] for r in conn.execute("SELECT legitimate_name FROM typosquat_targets").fetchall()]
+            tgts = [r["legitimate_name"] for r in conn.execute("SELECT legitimate_name FROM typosquat_targets").fetchall()]
             conn.close()
             best, best_ratio = None, 0.0
             for t in targets:
@@ -370,7 +370,7 @@ class PackageScanner:
             # Check: is the latest version itself flagged in our DB?
             conn = get_connection()
             poisoned = conn.execute(
-                "SELECT 1 FROM malicious_packages WHERE LOWER(name)=LOWER(?) AND (version IS NULL OR version=?)",
+                "SELECT 1 FROM malicious_packages WHERE LOWER(name)=LOWER(%s) AND (version IS NULL OR version=%s)",
                 (name, latest)
             ).fetchone()
             conn.close()
