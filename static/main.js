@@ -26,9 +26,11 @@ async function loadStats() {
     document.getElementById('stat-known').textContent = d.total_known_malicious.toLocaleString();
     document.getElementById('stat-critical').textContent = d.critical.toLocaleString();
     document.getElementById('stat-targets').textContent = d.typosquat_targets.toLocaleString();
-    document.getElementById('db-badge').textContent = `${d.total_known_malicious} packages tracked`;
+    const badge = document.getElementById('db-badge');
+    if (badge) badge.textContent = `${d.total_known_malicious} packages tracked`;
   } catch {
-    document.getElementById('db-badge').textContent = 'Offline';
+    const badge = document.getElementById('db-badge');
+    if (badge) badge.textContent = 'Offline';
   }
 }
 
@@ -209,6 +211,31 @@ function buildList(id, pkgs, isFlagged) {
   el.innerHTML = pkgs.map((p, i) => pkgCard(p, i)).join('');
 }
 
+function copySuggestion(cmd, btn) {
+  navigator.clipboard.writeText(cmd).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {});
+}
+
+function buildSuggestionHtml(sugg) {
+  if (!sugg) return '';
+  if (sugg.warning) {
+    const ref = sugg.url ? `<a class="sugg-ref" href="${sugg.url}" target="_blank" rel="noopener">npm →</a>` : '';
+    return `<div class="suggestion-bar suggestion-warn"><span class="sugg-warn-icon">⚠</span><span class="sugg-warn-text">${sugg.reason}</span>${ref}</div>`;
+  }
+  const label = `${sugg.name}${sugg.version ? '@' + sugg.version : ''}`;
+  const cmd = sugg.install || `npm install ${sugg.name}`;
+  return `<div class="suggestion-bar">
+  <span class="sugg-label">Use instead:</span>
+  <button class="sugg-chip" onclick="copySuggestion('${cmd}', this)" title="Click to copy: ${cmd}">📦 ${label}</button>
+  <span class="sugg-reason">${sugg.reason}</span>
+  <a class="sugg-ref" href="${sugg.url}" target="_blank" rel="noopener">npm →</a>
+</div>`;
+}
+
 function pkgCard(pkg, idx) {
   const sev = pkg.max_severity || 'safe';
   const flags = pkg.flags || [];
@@ -243,6 +270,7 @@ function pkgCard(pkg, idx) {
       <span class="chevron">▾</span>
     </div>
   </div>
+  ${buildSuggestionHtml(pkg.suggestion)}
   ${flags.length ? `<div class="flag-list">${flagsHtml}</div>` : ''}
 </div>`;
 }

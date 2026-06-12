@@ -10,6 +10,8 @@ from database import get_connection
 load_dotenv()
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
+app.config["MAX_CONTENT_LENGTH"] = 512 * 1024  # 512 KB max request body
 scanner = PackageScanner()
 
 def check_auth(username, password):
@@ -96,4 +98,5 @@ def delete_tool(tool_id):
     return jsonify({"success": True})
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    app.run(debug=debug, port=int(os.environ.get("PORT", 5000)))

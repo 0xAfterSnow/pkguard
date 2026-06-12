@@ -92,8 +92,10 @@ class PackageScanner:
             result["safe"] = False
             severities = [f.get("severity", "low") for f in result["flags"]]
             result["max_severity"] = self._max_severity(severities)
+            result["suggestion"] = self._get_suggestion(name, version_spec, result["flags"])
         else:
             result["max_severity"] = "safe"
+            result["suggestion"] = None
 
         return result
 
@@ -142,14 +144,28 @@ class PackageScanner:
                 aliases = v.get("aliases", [])
                 cve = next((a for a in aliases if a.startswith("CVE-")), None)
                 severity = self._osv_severity(v)
+                # Extract the minimum fixed version from SEMVER ranges
+                fixed_version = None
+                for affected in v.get("affected", []):
+                    for rng in affected.get("ranges", []):
+                        if rng.get("type") == "SEMVER":
+                            for event in rng.get("events", []):
+                                if "fixed" in event:
+                                    fixed_version = event["fixed"]
+                                    break
+                        if fixed_version:
+                            break
+                    if fixed_version:
+                        break
                 flags.append({
-                    "source":      "OSV / GitHub Advisory",
-                    "type":        "vulnerability",
-                    "severity":    severity,
-                    "title":       v.get("id", "Advisory"),
-                    "description": (v.get("summary") or v.get("details", ""))[:200],
-                    "cve":         cve,
-                    "reference":   f"https://osv.dev/vulnerability/{v.get('id','')}",
+                    "source":        "OSV / GitHub Advisory",
+                    "type":          "vulnerability",
+                    "severity":      severity,
+                    "title":         v.get("id", "Advisory"),
+                    "description":   (v.get("summary") or v.get("details", ""))[:200],
+                    "cve":           cve,
+                    "reference":     f"https://osv.dev/vulnerability/{v.get('id','')}",
+                    "fixed_version": fixed_version,
                 })
             return flags
         except Exception:
@@ -251,6 +267,146 @@ class PackageScanner:
             return flags
         except Exception:
             return []
+
+    # ------------------------------------------------------------------ #
+    #  Suggestion engine
+    # ------------------------------------------------------------------ #
+    def _get_npm_latest(self, name: str) -> str | None:
+        """Fetch dist-tags.latest from the npm registry."""
+        try:
+            resp = requests.get(f"{NPM_API}/{name}/latest", timeout=6)
+            if resp.status_code == 200:
+                return resp.json().get("version")
+        except Exception:
+            pass
+        return None
+
+    def _get_suggestion(self, name: str, version_spec: str, flags: list) -> dict | None:
+        """Return a suggestion dict for a flagged package, or None."""
+        flag_types = {f["type"] for f in flags}
+
+        # 1. Typosquat → find the legitimate package name
+        if "typosquat" in flag_types:
+            legit = None
+            # Try: reference is an npm URL (set by the live typosquat engine)
+            for f in flags:
+                if f["type"] == "typosquat" and f.get("reference", "").startswith("https://www.npmjs.com/package/"):
+                    candidate = f["reference"].rstrip("/").split("/")[-1]
+                    if candidate.lower() != name.lower():
+                        legit = candidate
+                        break
+            # Fallback: fuzzy-match against typosquat_targets table
+            if not legit:
+                conn = get_connection()
+                tgts = [r[0] for r in conn.execute("SELECT legitimate_name FROM typosquat_targets").fetchall()]
+                conn.close()
+                best, best_ratio = None, 0.0
+                for t in tgts:
+                    ratio = difflib.SequenceMatcher(None, name.lower(), t.lower()).ratio()
+                    if ratio > best_ratio:
+                        best_ratio, best = ratio, t
+                if best and best_ratio > 0.6 and best.lower() != name.lower():
+                    legit = best
+            if legit:
+                return {
+                    "name":    legit,
+                    "version": "latest",
+                    "reason":  f"'{name}' is a typosquat — install the real package",
+                    "url":     f"https://www.npmjs.com/package/{legit}",
+                    "install": f"npm install {legit}",
+                    "warning": False,
+                }
+
+        # 2. Package not found → fuzzy-match against known legitimate names
+        if "not_found" in flag_types:
+            conn = get_connection()
+            targets = [r[0] for r in conn.execute("SELECT legitimate_name FROM typosquat_targets").fetchall()]
+            conn.close()
+            best, best_ratio = None, 0.0
+            for t in targets:
+                ratio = difflib.SequenceMatcher(None, name.lower(), t.lower()).ratio()
+                if ratio > best_ratio:
+                    best_ratio, best = ratio, t
+            if best and best_ratio > 0.6:
+                return {
+                    "name":    best,
+                    "version": "latest",
+                    "reason":  f"Did you mean '{best}'? ({best_ratio:.0%} match)",
+                    "url":     f"https://www.npmjs.com/package/{best}",
+                    "install": f"npm install {best}",
+                    "warning": False,
+                }
+
+        # 3. Vulnerability / malware / backdoor / sabotage → suggest a safe version
+        actionable = {"vulnerability", "malware", "backdoor", "sabotage", "dependency confusion"}
+        if flag_types & actionable:
+            # Priority 1: minimum fixed version from OSV advisory
+            fixed_version = next(
+                (f["fixed_version"] for f in flags if f.get("fixed_version")),
+                None
+            )
+            if fixed_version:
+                return {
+                    "name":    name,
+                    "version": fixed_version,
+                    "reason":  "Minimum patched version per OSV advisory",
+                    "url":     f"https://www.npmjs.com/package/{name}",
+                    "install": f"npm install {name}@{fixed_version}",
+                    "warning": False,
+                }
+
+            # Priority 2: latest from npm
+            latest = self._get_npm_latest(name)
+            if latest is None:
+                return {
+                    "name":    None,
+                    "version": None,
+                    "reason":  "Package unreachable on npm — consider removing it",
+                    "url":     None,
+                    "install": None,
+                    "warning": True,
+                }
+
+            # Check: is the latest version itself flagged in our DB?
+            conn = get_connection()
+            poisoned = conn.execute(
+                "SELECT 1 FROM malicious_packages WHERE LOWER(name)=LOWER(?) AND (version IS NULL OR version=?)",
+                (name, latest)
+            ).fetchone()
+            conn.close()
+
+            if poisoned:
+                return {
+                    "name":    None,
+                    "version": None,
+                    "reason":  f"Latest ({latest}) is also compromised — remove this package",
+                    "url":     f"https://www.npmjs.com/package/{name}",
+                    "install": None,
+                    "warning": True,
+                }
+
+            # Check: user is already on latest
+            clean_cur = self._clean_version(version_spec)
+            if clean_cur == latest:
+                return {
+                    "name":    None,
+                    "version": None,
+                    "reason":  f"Already on latest ({latest}) — await upstream patch or find an alternative",
+                    "url":     f"https://www.npmjs.com/package/{name}",
+                    "install": None,
+                    "warning": True,
+                }
+
+            return {
+                "name":    name,
+                "version": latest,
+                "reason":  "Upgrade to latest safe version",
+                "url":     f"https://www.npmjs.com/package/{name}",
+                "install": f"npm install {name}@latest",
+                "warning": False,
+            }
+
+        return None
 
     # ------------------------------------------------------------------ #
     #  Helpers

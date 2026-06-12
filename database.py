@@ -86,26 +86,77 @@ SEED_MALICIOUS = [
     ("jsonwebtoken", "8.5.1", "high", "vulnerability", "Improper validation of algorithm type allows authentication bypass", "CVE-2022-23529", "GitHub Advisory"),
     ("passport", "0.6.0", "medium", "vulnerability", "Session fixation vulnerability", "CVE-2022-25896", "GitHub Advisory"),
     ("passport-oauth2", "1.6.0", "medium", "vulnerability", "Insufficient PKCE protection", "CVE-2023-26047", "GitHub Advisory"),
+    ("eslint-scope", "3.7.2", "critical", "malware", "Compromised maintainer account injected postinstall script to steal npm credentials via Pastebin payload", "N/A", "npm incident 2018"),
+    ("eslint-config-eslint", "5.0.2", "critical", "malware", "Compromised maintainer account injected postinstall script to steal npm credentials", "N/A", "npm incident 2018"),
+    ("bootstrap-sass", "3.2.0.3", "critical", "backdoor", "Remote code execution backdoor allowing arbitrary command execution via manipulated cookie", "N/A", "npm incident 2019"),
+    ("bootstrap-sass", "3.1.2", "critical", "backdoor", "Malicious package compromise identified by OSV", "MAL-2024-1832", "Hacktron 2024"),
+    ("bitcoin-main-lib", None, "critical", "malware", "Delivers NodeCordRAT via postinstall script to harvest browser session data and secrets", "N/A", "Zscaler 2025"),
+    ("bitcoin-lib-js", None, "critical", "malware", "Delivers NodeCordRAT via postinstall script to harvest browser session data and secrets", "N/A", "Zscaler 2025"),
+    ("bip40", None, "critical", "malware", "Wrapper dependency utilized in NodeCordRAT attack chain", "N/A", "Zscaler 2025"),
+    ("typescriptjs", None, "critical", "typosquat", "Typosquatted package delivering 24MB cross-platform credential stealer via fake CAPTCHA", "N/A", "PhantomRaven 2025"),
+    ("react-router-dom.js", None, "critical", "typosquat", "Typosquatted package delivering cross-platform credential stealer", "N/A", "PhantomRaven 2025"),
+    ("dizcordjs", None, "critical", "typosquat", "Typosquatted package delivering cross-platform credential stealer", "N/A", "PhantomRaven 2025"),
+    ("deezcord.js", None, "critical", "typosquat", "Typosquatted package delivering cross-platform credential stealer", "N/A", "PhantomRaven 2025"),
+    ("dezcord.js", None, "critical", "typosquat", "Typosquatted package delivering cross-platform credential stealer", "N/A", "PhantomRaven 2025"),
+    ("etherdjs", None, "critical", "typosquat", "Typosquatted package delivering cross-platform credential stealer", "N/A", "PhantomRaven 2025"),
+    ("ethesjs", None, "critical", "typosquat", "Typosquatted package delivering cross-platform credential stealer", "N/A", "PhantomRaven 2025"),
+    ("ethetsjs", None, "critical", "typosquat", "Typosquatted package delivering cross-platform credential stealer", "N/A", "PhantomRaven 2025"),
+    ("nodemonjs", None, "critical", "typosquat", "Typosquatted package delivering cross-platform credential stealer", "N/A", "PhantomRaven 2025"),
+    ("zustand.js", None, "critical", "typosquat", "Typosquatted package delivering cross-platform credential stealer", "N/A", "PhantomRaven 2025"),
+    ("gxm-reference-web-auth-server", None, "high", "dependency confusion", "Targeted dependency confusion package exfiltrating /etc/hosts and internal configs", "N/A", "Snyk Research"),
+    ("ldtzstxwzpntxqn", None, "medium", "malware", "Wrapper package used in gxm dependency confusion payload execution", "N/A", "Snyk Research"),
+    ("lznfjbhurpjsqmr", None, "medium", "malware", "Wrapper package used in gxm dependency confusion payload execution", "N/A", "Snyk Research"),
+    ("@beproduct/nestjs-auth", "0.1.19", "critical", "malware", "Mini Shai-Hulud worm payload stealing cloud/CI secrets and replicating via publish tokens", "CVE-2026-46412", "GitHub Advisory"),
+    ("@tanstack/react-router", "1.169.8", "critical", "malware", "Compromised via GitHub Actions OIDC theft, embedded Mini Shai-Hulud worm", "CVE-2026-45321", "npm incident 2026"),
+    ("@tanstack/vue-router", "1.169.8", "critical", "malware", "Compromised via GitHub Actions OIDC theft, embedded Mini Shai-Hulud worm", "CVE-2026-45321", "npm incident 2026"),
+    ("@tanstack/solid-router", "1.169.8", "critical", "malware", "Compromised via GitHub Actions OIDC theft, embedded Mini Shai-Hulud worm", "CVE-2026-45321", "npm incident 2026"),
+    ("@tanstack/react-start", "1.167.71", "critical", "malware", "Compromised via GitHub Actions OIDC theft, embedded Mini Shai-Hulud worm", "CVE-2026-45321", "npm incident 2026"),
+    ("@tanstack/setup", "1.0.0", "critical", "malware", "Phantom dependency injected into TanStack ecosystem to execute Bun payload via prepare hook", "N/A", "npm incident 2026"),
+    ("@tallyui/components", "1.0.3", "critical", "malware", "Compromised package acting as delivery vector for Shai-Hulud payload", "N/A", "npm incident 2026"),
+    ("axios", "1.14.1", "critical", "malware", "Hijacked package pulling plain-crypto-js RAT dropper (Lazarus Group)", "CVE-2026-X", "npm incident 2026"),
+    ("axios", "0.30.4", "critical", "malware", "Hijacked package pulling plain-crypto-js RAT dropper (Lazarus Group)", "CVE-2026-X", "npm incident 2026"),
+    ("plain-crypto-js", "4.2.1", "critical", "malware", "Phantom dependency acting as a cross-platform RAT dropper for WAVESHAPER backdoor", "N/A", "npm incident 2026"),
+    ("@redhat-cloud-services/chrome", "2.3.4", "critical", "malware", "Miasma credential-stealing worm injected via hijacked CI/CD pipeline", "N/A", "Miasma campaign 2026"),
+    ("@redhat-cloud-services/frontend-components", "7.7.5", "critical", "malware", "Miasma credential-stealing worm injected via hijacked CI/CD pipeline", "N/A", "Miasma campaign 2026"),
+    ("@redhat-cloud-services/frontend-components-testing", "1.2.4", "critical", "malware", "Miasma credential-stealing worm injected via hijacked CI/CD pipeline", "N/A", "Miasma campaign 2026"),
+    ("chalk", "5.6.1", "critical", "malware", "Hijacked package containing crypto-stealing browser malware hooking Web3 APIs", "N/A", "npm incident 2025"),
+    ("debug", "4.4.2", "critical", "malware", "Hijacked package containing crypto-stealing browser malware hooking Web3 APIs", "N/A", "npm incident 2025"),
+    ("ansi-styles", "6.2.2", "critical", "malware", "Hijacked package containing crypto-stealing browser malware hooking Web3 APIs", "N/A", "npm incident 2025"),
+    ("supports-color", "10.2.1", "critical", "malware", "Hijacked package containing crypto-stealing browser malware hooking Web3 APIs", "N/A", "npm incident 2025"),
+    ("ansi-regex", "6.2.1", "critical", "malware", "Hijacked package containing crypto-stealing browser malware hooking Web3 APIs", "N/A", "npm incident 2025"),
+    ("color-convert", "3.1.1", "critical", "malware", "Hijacked package containing crypto-stealing browser malware hooking Web3 APIs", "N/A", "npm incident 2025"),
+    ("wrap-ansi", "9.0.1", "critical", "malware", "Hijacked package containing crypto-stealing browser malware hooking Web3 APIs", "N/A", "npm incident 2025"),
+    ("strip-ansi", "7.1.1", "critical", "malware", "Hijacked package containing crypto-stealing browser malware hooking Web3 APIs", "N/A", "npm incident 2025"),
+    ("@vitest/browser", None, "critical", "vulnerability", "Serves unsanitized otelCarrier query parameter as inline script causing XSS", "CVE-2026-47428", "GitHub Advisory"),
+    ("svp-s3-storage", "100.100.100", "high", "dependency confusion", "mr.4nd3r50n namespace squatting package for CI/CD reconnaissance", "N/A", "Microsoft Threat Intel"),
+    ("@sber-ecom-core/sberpay-widget", None, "high", "dependency confusion", "Impersonates SberPay payment widget to execute info-gathering postinstall script", "N/A", "Microsoft Threat Intel"),
+    ("@wb-track/shared-front", "3.5.22", "high", "dependency confusion", "ce-rwb namespace squatting package targeting internal frontend platforms", "N/A", "Microsoft Threat Intel"),
+    ("graphalgo", "2.2.11", "critical", "typosquat", "Lazarus Group typosquat delivering malicious payload", "N/A", "ReversingLabs"),
+    ("terminalcolor256", "2.2.6", "critical", "typosquat", "Lazarus Group typosquat mimicking terminal utility to deliver malware", "N/A", "ReversingLabs"),
+    ("@duckdb/duckdb-wasm", "1.29.2", "critical", "malware", "Hijacked package containing browser-based crypto-stealer", "N/A", "Veracode 2025"),
+    ("executable-stories-react", "0.1.7", "high", "malware", "Miasma supply chain worm artifact targeting UI testing frameworks", "N/A", "OX Security"),
+    ("autotel-playwright", "0.4.32", "high", "malware", "Miasma supply chain worm artifact targeting frontend testing", "N/A", "OX Security")
 ]
 
-SEED_TYPOSQUAT_TARGETS = [
+SEED_TYPOSQUAT_TARGETS_EXPANDED = [
     ("react", "frontend"), ("react-dom", "frontend"), ("vue", "frontend"),
     ("angular", "frontend"), ("svelte", "frontend"), ("next", "frontend"),
     ("nuxt", "frontend"), ("webpack", "build"), ("babel", "build"),
     ("eslint", "tooling"), ("prettier", "tooling"), ("typescript", "language"),
-    ("express", "backend"), ("fastify", "backend"), ("koa", "backend"),
-    ("mongoose", "database"), ("sequelize", "database"), ("knex", "database"),
-    ("lodash", "utility"), ("moment", "utility"), ("axios", "http"),
-    ("node-fetch", "http"), ("got", "http"), ("chalk", "cli"),
-    ("commander", "cli"), ("inquirer", "cli"), ("jest", "testing"),
-    ("mocha", "testing"), ("chai", "testing"), ("electron", "desktop"),
-    ("socket.io", "realtime"), ("discord.js", "api"), ("stripe", "payments"),
+    ("tailwindcss", "styling"), ("postcss", "styling"), ("sass", "styling"),
+    ("lucide-react", "icons"), ("styled-components", "styling"), ("class-variance-authority", "styling"),
+    ("tailwind-merge", "styling"), ("radix-ui", "components"), ("shadcn-ui", "components"),
+    ("zustand", "state-management"), ("redux", "state-management"), ("mobx", "state-management"),
+    ("react-router-dom", "routing"), ("@tanstack/react-router", "routing"), ("@tanstack/vue-router", "routing"),
+    ("axios", "http"), ("node-fetch", "http"), ("got", "http"), 
+    ("chalk", "cli"), ("debug", "utility"), ("lodash", "utility"), 
+    ("moment", "utility"), ("date-fns", "utility"), ("rxjs", "utility"),
+    ("jest", "testing"), ("vitest", "testing"), ("playwright", "testing"), 
+    ("cypress", "testing"), ("mocha", "testing"), ("chai", "testing"), 
+    ("electron", "desktop"), ("socket.io", "realtime"), ("discord.js", "api"), 
     ("d3", "visualization"), ("three", "3d"), ("jquery", "dom"),
-    ("cross-env", "build"), ("dotenv", "config"), ("cors", "middleware"),
-    ("helmet", "security"), ("bcrypt", "security"), ("jsonwebtoken", "auth"),
-    ("passport", "auth"), ("multer", "files"), ("sharp", "image"),
+    ("cross-env", "build"), ("dotenv", "config"), ("cors", "middleware")
 ]
-
 SEED_TOOLS = [
     ("VS Code", "tt-vscode", "Snyk Security", "Real-time vulnerability detection in your editor. Flags CVEs in package.json as you type.", "https://marketplace.visualstudio.com/items?itemName=snyk-security.snyk-vulnerability-scanner"),
     ("VS Code", "tt-vscode", "npm Audit", "Runs npm audit inline, surfacing vulnerability counts in the VS Code status bar automatically.", "https://marketplace.visualstudio.com/items?itemName=nicusorb.npm-audit"),
@@ -134,14 +185,14 @@ def init_db():
         )
         conn.executemany(
             "INSERT INTO typosquat_targets (legitimate_name, category) VALUES (?,?)",
-            SEED_TYPOSQUAT_TARGETS,
+            SEED_TYPOSQUAT_TARGETS_EXPANDED,
         )
         conn.executemany(
             "INSERT INTO tools (type, cls, name, desc, url) VALUES (?,?,?,?,?)",
             SEED_TOOLS,
         )
         conn.commit()
-        print(f"[DB] Seeded {len(SEED_MALICIOUS)} malicious packages, {len(SEED_TYPOSQUAT_TARGETS)} typosquat targets, and {len(SEED_TOOLS)} tools.")
+        print(f"[DB] Seeded {len(SEED_MALICIOUS)} malicious packages, {len(SEED_TYPOSQUAT_TARGETS_EXPANDED)} typosquat targets, and {len(SEED_TOOLS)} tools.")
     else:
         print(f"[DB] Database already has {count} records.")
     conn.close()
