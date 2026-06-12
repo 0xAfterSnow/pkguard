@@ -19,14 +19,17 @@
   <meta property="og:title" content="PkgGuard — npm Supply Chain Scanner" />
   <meta property="og:description" content="Catch malicious packages before they ship. Protect your project from known malware, live CVE advisories, and typosquats." />
   <meta property="og:type" content="website" />
+  <meta property="og:image" content="{{ url_for('static', filename='og-image.png', _external=True) }}" />
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="PkgGuard — npm Supply Chain Scanner" />
   <meta name="twitter:description" content="Catch malicious packages before they ship. Protect your project from known malware, live CVE advisories, and typosquats." />
+  <meta name="twitter:image" content="{{ url_for('static', filename='og-image.png', _external=True) }}" />
 
-  <!-- Favicon -->
+  <!-- Favicon & PWA -->
   <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml" />
+  <link rel="manifest" href="/manifest.json" />
 
   <!-- JSON-LD Structured Data for AI & Search -->
   <script type="application/ld+json">
@@ -76,6 +79,7 @@
         <a href="https://osv.dev" target="_blank" rel="noopener">OSV DB</a>
       </div>
       <div class="nav-right">
+        <button id="install-pwa-btn" class="nav-button" style="display: none; background: var(--black); margin-right: 8px;">📥 Install App</button>
         <a href="javascript:void(0)" onclick="openDevModal()" class="nav-button">Developer</a>
       </div>
     </nav>

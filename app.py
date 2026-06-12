@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, Response
+from flask import Flask, request, jsonify, render_template, Response, send_from_directory
 from scanner import PackageScanner
 import json
 import os
@@ -6,12 +6,22 @@ from werkzeug.security import check_password_hash
 from dotenv import load_dotenv
 from functools import wraps
 from database import get_connection
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 load_dotenv()
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
 app.config["MAX_CONTENT_LENGTH"] = 512 * 1024  # 512 KB max request body
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["500 per day", "100 per hour"],
+    storage_uri="memory://"
+)
+
 scanner = PackageScanner()
 
 def check_auth(username, password):
@@ -46,7 +56,15 @@ def index():
 def admin():
     return render_template("admin.html")
 
+@app.route('/robots.txt')
+@app.route('/sitemap.xml')
+@app.route('/sw.js')
+@app.route('/manifest.json')
+def static_from_root():
+    return send_from_directory(app.static_folder, request.path[1:])
+
 @app.route("/api/scan", methods=["POST"])
+@limiter.limit("10 per minute")
 def scan():
     data = request.get_json()
     if not data or "packageJson" not in data:
